@@ -339,6 +339,9 @@
   justify-content: flex-start;
   display: flex;
   position: relative;
+  border: none;
+  outline: none;
+  background-color: transparent;
 }
 
 .search-placeholder {
