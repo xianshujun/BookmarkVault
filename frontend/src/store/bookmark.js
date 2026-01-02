@@ -16,8 +16,45 @@ export function useBookmarkStore() {
     title: '',
     url: ''
   })
+  const jumpPageNum = ref(1)
 
   const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
+
+  const displayPages = computed(() => {
+    const pages = []
+    const total = totalPages.value
+    const current = currentPage.value
+    
+    if (total <= 7) {
+      for (let i = 1; i <= total; i++) {
+        pages.push(i)
+      }
+    } else {
+      if (current <= 4) {
+        for (let i = 1; i <= 5; i++) {
+          pages.push(i)
+        }
+        pages.push('...')
+        pages.push(total)
+      } else if (current >= total - 3) {
+        pages.push(1)
+        pages.push('...')
+        for (let i = total - 4; i <= total; i++) {
+          pages.push(i)
+        }
+      } else {
+        pages.push(1)
+        pages.push('...')
+        for (let i = current - 1; i <= current + 1; i++) {
+          pages.push(i)
+        }
+        pages.push('...')
+        pages.push(total)
+      }
+    }
+    
+    return pages
+  })
 
   function handleMenuClick(menu) {
     activeMenu.value = menu
@@ -115,6 +152,16 @@ export function useBookmarkStore() {
     currentPage.value = page
   }
 
+  function handleJump() {
+    const page = parseInt(jumpPageNum.value)
+    if (page >= 1 && page <= totalPages.value) {
+      currentPage.value = page
+      jumpPageNum.value = page
+    } else {
+      ElMessage.warning('请输入有效的页码')
+    }
+  }
+
   function handleRefresh() {
     location.reload()
   }
@@ -138,6 +185,8 @@ export function useBookmarkStore() {
     addDialogVisible,
     bookmarkForm,
     totalPages,
+    displayPages,
+    jumpPageNum,
     handleMenuClick,
     handleFileUpload,
     deleteFile,
@@ -149,6 +198,7 @@ export function useBookmarkStore() {
     prevPage,
     nextPage,
     goToPage,
+    handleJump,
     handleRefresh,
     initTheme
   }

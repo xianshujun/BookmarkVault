@@ -92,11 +92,12 @@
             </el-table-column>
           </el-table>
           <div v-else class="empty-state-container">
-            <img class="empty-state" src="https://seal-img.nos-jd.163yun.com/obj/w5rCgMKVw6DCmGzCmsK-/77503542389/f4d1/9d6a/01f1/4a52d1ae8808e5aeba6a0c2f4d4aa002.png" />
+            <img class="empty-state" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503542389_f4d1_9d6a_01f1_4a52d1ae8808e5aeba6a0c2f4d4aa002.png" />
             <span class="empty-text">暂无数据，请上传书签文件或加载演示数据</span>
           </div>
         </div>
         <div class="pagination-section">
+          <div class="total-text">共 {{ total }} 条</div>
           <div class="page-size-selector">
             <div class="page-size">
               <span class="page-size-num">{{ pageSize }}</span>
@@ -108,16 +109,23 @@
             <img class="prev-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503544380_10eb_0c26_0024_976f1468e215628ecab809237fb56abc.png" @click="prevPage" />
             <div 
               class="page-num" 
-              :class="{ active: currentPage === page }" 
-              v-for="page in totalPages" 
+              :class="{ active: currentPage === page, ellipsis: page === '...' }" 
+              v-for="page in displayPages" 
               :key="page"
-              @click="goToPage(page)"
+              @click="page !== '...' && goToPage(page)"
             ><span>{{ page }}</span></div>
             <img class="next-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503545312_de1f_5f1e_8089_642aa8dc991f5e1b6dcd8aec1358316c.png" @click="nextPage" />
           </div>
           <div class="jump-to">
             <span class="jump-text">前往</span>
-            <span class="jump-num">{{ currentPage }}</span>
+            <input 
+              type="number" 
+              class="jump-input" 
+              v-model="jumpPageNum"
+              @keyup.enter="handleJump"
+              min="1"
+              :max="totalPages"
+            />
             <span class="jump-page">页</span>
           </div>
         </div>
@@ -161,6 +169,8 @@ const {
   addDialogVisible,
   bookmarkForm,
   totalPages,
+  displayPages,
+  jumpPageNum,
   handleMenuClick,
   handleFileUpload,
   deleteFile,
@@ -172,6 +182,7 @@ const {
   prevPage,
   nextPage,
   goToPage,
+  handleJump,
   handleRefresh,
   initTheme
 } = useBookmarkStore()
