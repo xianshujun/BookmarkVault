@@ -1,28 +1,6 @@
 <template>
   <div class="bookmark-manage-container" :class="{ 'dark-mode': !isDayMode }">
-    <div class="sidebar">
-      <span class="sidebar-title">书签管家/<br />BookmarkSave</span>
-      <div class="sidebar-menu">
-        <div class="menu-divider"><div class="divider-line"></div></div>
-        <div class="menu-items">
-          <div 
-            class="menu-item" 
-            :class="{ active: activeMenu === '书签管理' }"
-            @click="handleMenuClick('书签管理')"
-          >
-            <span class="menu-text">书签管理</span>
-          </div>
-          <div 
-            class="menu-item"
-            :class="{ active: activeMenu === '版本管理' }"
-            @click="handleMenuClick('版本管理')"
-          >
-            <span class="menu-text">版本管理</span>
-            <img class="menu-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503543128_065b_a1e7_db3b_b9c2a10fe87c5f6c0a69ea6578146488.png" />
-          </div>
-        </div>
-      </div>
-    </div>
+    <LeftSidebar :active-menu="activeMenu" />
     <div class="main-content">
       <div class="top-card">
         <div class="card-title-section">
@@ -38,9 +16,10 @@
                 class="search-input" 
                 v-model="searchKeyword"
                 placeholder="支持网站名称模糊搜索..."
+                @keyup.enter="handleSearch"
               />
             </div>
-            <img class="search-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503538641_556c_066e_08ed_ba46761a5715889a587adede6a3f5553.png" />
+            <img class="search-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503538641_556c_066e_08ed_ba46761a5715889a587adede6a3f5553.png" @click="handleSearch" />
           </div>
         </div>
         <div class="card-upload-section">
@@ -55,14 +34,7 @@
           <span class="upload-hint">支持firefox/chrome浏览器<br />导出的收藏夹并自动解析<br /></span>
         </div>
         <div class="card-mode-section">
-          <div class="mode-toggle">
-            <span class="mode-text">{{ isDayMode ? '日间模式' : '夜间模式' }}</span>
-            <div class="mode-switch" @click="toggleMode">
-              <div class="switch-circle" :class="{ 'dark-switch': !isDayMode }">
-                <img class="switch-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_76742347215_1427_7c2d_b91f_485b4e25a5baaa14caf663d7b95e992d.png" />
-              </div>
-            </div>
-          </div>
+          <DarkModeToggle :is-day-mode="isDayMode" @toggle="toggleMode" />
           <div class="file-list">
             <div class="file-item" v-for="(file, index) in uploadedFiles" :key="index">
               <div class="file-info">
@@ -96,39 +68,17 @@
             <span class="empty-text">暂无数据，请上传书签文件或加载演示数据</span>
           </div>
         </div>
-        <div class="pagination-section">
-          <div class="total-text">共 {{ total }} 条</div>
-          <div class="page-size-selector">
-            <div class="page-size">
-              <span class="page-size-num">{{ pageSize }}</span>
-              <span class="page-size-label">/页</span>
-            </div>
-            <img class="dropdown-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503545770_cd7e_cab3_0e4f_678736cb20177b90c9994687031cbd74.png" />
-          </div>
-          <div class="pagination">
-            <img class="prev-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503544380_10eb_0c26_0024_976f1468e215628ecab809237fb56abc.png" @click="prevPage" />
-            <div 
-              class="page-num" 
-              :class="{ active: currentPage === page, ellipsis: page === '...' }" 
-              v-for="page in displayPages" 
-              :key="page"
-              @click="page !== '...' && goToPage(page)"
-            ><span>{{ page }}</span></div>
-            <img class="next-icon" src="@/icons/obj_w5rCgMKVw6DCmGzCmsK-_77503545312_de1f_5f1e_8089_642aa8dc991f5e1b6dcd8aec1358316c.png" @click="nextPage" />
-          </div>
-          <div class="jump-to">
-            <span class="jump-text">前往</span>
-            <input 
-              type="number" 
-              class="jump-input" 
-              v-model="jumpPageNum"
-              @keyup.enter="handleJump"
-              min="1"
-              :max="totalPages"
-            />
-            <span class="jump-page">页</span>
-          </div>
-        </div>
+        <Pagination
+          :current-page="currentPage"
+          :page-size="pageSize"
+          :total="total"
+          :total-pages="totalPages"
+          :display-pages="displayPages"
+          @prev-page="prevPage"
+          @next-page="nextPage"
+          @go-to-page="goToPage"
+          @jump="handleJump"
+        />
       </div>
     </div>
 
@@ -154,6 +104,11 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useBookmarkStore } from '@/store/bookmark'
+import LeftSidebar from '@/components/layout/left-sidebar.vue'
+import DarkModeToggle from '@/components/layout/dark-mode-toggle.vue'
+import Pagination from '@/components/layout/pagination.vue'
+import { getBookmarks, addBookmark, searchBookmarks } from '@/api/bookmark'
+import { ElMessage } from 'element-plus'
 
 const fileInput = ref(null)
 
@@ -170,26 +125,95 @@ const {
   bookmarkForm,
   totalPages,
   displayPages,
-  jumpPageNum,
   handleMenuClick,
   handleFileUpload,
   deleteFile,
   toggleMode,
   openAddDialog,
-  submitBookmark,
   editBookmark,
   deleteBookmark,
   prevPage,
   nextPage,
   goToPage,
   handleJump,
-  handleRefresh,
   initTheme
 } = useBookmarkStore()
 
 onMounted(() => {
   initTheme()
+  loadBookmarks()
 })
+
+async function loadBookmarks() {
+  try {
+    const response = await getBookmarks()
+    if (response && response.data) {
+      bookmarkList.value = response.data
+      total.value = response.data.length
+    }
+  } catch (error) {
+    console.error('加载书签失败:', error)
+    ElMessage.error('加载书签失败')
+  }
+}
+
+async function submitBookmark() {
+  if (!bookmarkForm.value.title || !bookmarkForm.value.url) {
+    ElMessage.warning('请填写完整信息')
+    return
+  }
+  
+  try {
+    const response = await addBookmark({
+      title: bookmarkForm.value.title,
+      url: bookmarkForm.value.url
+    })
+    
+    if (response && response.data) {
+      ElMessage.success(response.data.message || '添加成功')
+      await loadBookmarks()
+      addDialogVisible.value = false
+    }
+  } catch (error) {
+    console.error('添加书签失败:', error)
+    ElMessage.error('添加书签失败')
+  }
+}
+
+async function handleSearch() {
+  const keyword = searchKeyword.value.trim()
+  
+  if (keyword) {
+    try {
+      const response = await searchBookmarks(keyword)
+      if (response && response.data) {
+        bookmarkList.value = response.data
+        total.value = response.data.length
+        ElMessage.success(`搜索到 ${response.data.length} 条结果`)
+      }
+    } catch (error) {
+      console.error('搜索失败:', error)
+      ElMessage.error('搜索失败')
+    }
+  } else {
+    await loadBookmarks()
+  }
+}
+
+async function handleRefresh() {
+  try {
+    const { refreshBookmarks } = await import('@/api/bookmark')
+    const response = await refreshBookmarks()
+    if (response && response.data) {
+      bookmarkList.value = response.data
+      total.value = response.data.length
+      ElMessage.success('刷新成功')
+    }
+  } catch (error) {
+    console.error('刷新失败:', error)
+    ElMessage.error('刷新失败')
+  }
+}
 
 function triggerFileUpload() {
   fileInput.value.click()

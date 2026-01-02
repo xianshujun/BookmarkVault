@@ -16,7 +16,6 @@ export function useBookmarkStore() {
     title: '',
     url: ''
   })
-  const jumpPageNum = ref(1)
 
   const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
 
@@ -102,23 +101,6 @@ export function useBookmarkStore() {
     addDialogVisible.value = true
   }
 
-  function submitBookmark() {
-    if (!bookmarkForm.value.title || !bookmarkForm.value.url) {
-      ElMessage.warning('请填写完整信息')
-      return
-    }
-    
-    bookmarkList.value.push({
-      title: bookmarkForm.value.title,
-      url: bookmarkForm.value.url,
-      dateAdded: new Date().toLocaleString()
-    })
-    
-    total.value = bookmarkList.value.length
-    addDialogVisible.value = false
-    ElMessage.success('添加成功')
-  }
-
   function editBookmark(row) {
     bookmarkForm.value = {
       title: row.title,
@@ -152,20 +134,6 @@ export function useBookmarkStore() {
     currentPage.value = page
   }
 
-  function handleJump() {
-    const page = parseInt(jumpPageNum.value)
-    if (page >= 1 && page <= totalPages.value) {
-      currentPage.value = page
-      jumpPageNum.value = page
-    } else {
-      ElMessage.warning('请输入有效的页码')
-    }
-  }
-
-  function handleRefresh() {
-    location.reload()
-  }
-
   function initTheme() {
     const savedMode = localStorage.getItem('themeMode')
     if (savedMode) {
@@ -186,20 +154,16 @@ export function useBookmarkStore() {
     bookmarkForm,
     totalPages,
     displayPages,
-    jumpPageNum,
     handleMenuClick,
     handleFileUpload,
     deleteFile,
     toggleMode,
     openAddDialog,
-    submitBookmark,
     editBookmark,
     deleteBookmark,
     prevPage,
     nextPage,
     goToPage,
-    handleJump,
-    handleRefresh,
     initTheme
   }
 }

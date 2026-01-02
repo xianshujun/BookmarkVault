@@ -6,6 +6,11 @@ const routes = [
     path: '/',
     name: 'bookmark-manage',
     component: BookmarkManage
+  },
+  {
+    path: '/version',
+    name: 'version-manage',
+    component: () => import('../views/version-manage.vue')
   }
 ]
 

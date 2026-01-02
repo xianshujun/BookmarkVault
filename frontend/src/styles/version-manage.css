@@ -1,0 +1,133 @@
+.version-manage-container {
+  width: 100vw;
+  height: 100vh;
+  min-width: 1200px;
+  min-height: 800px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: flex-start;
+  background-color: rgb(245, 247, 250);
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.version-manage-container.dark-mode {
+  background-color: #1a1a1a;
+}
+
+
+
+.version-manage-container .upload-btn {
+  width: 144px;
+  height: 32px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 5px;
+  padding-right: 16px;
+  padding-bottom: 5px;
+  padding-left: 16px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  background-color: #409eff;
+  font-size: 14px;
+  font-family: 'FZShuSong-Z01', 'FZShuSong', '方正书宋', serif;
+  font-weight: 500;
+  line-height: 22px;
+  color: #ffffff;
+  white-space: pre;
+  cursor: pointer;
+    /* 新增：自动占满左侧空间，按钮靠右 */
+  margin-left: auto;
+  /* 新增：右侧留10px空余（数值可改） */
+  margin-right: 2%;
+  margin-top: 6%;
+}
+
+.version-manage-container .upload-hint {
+  width: 189px;
+  height: 52px;
+  flex-shrink: 0;
+  font-size: 14px;
+  font-family: 'FZShuSong-Z01', 'FZShuSong', '方正书宋', serif;
+  font-weight: 400;
+  line-height: 24px;
+  color: #909399;
+}
+
+.version-list {
+  width: 100%;
+  padding: 20px;
+}
+
+.version-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 15px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dark-mode .version-item {
+  background-color: #2d2d2d;
+  color: #ffffff;
+}
+
+.version-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.version-name {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+}
+
+.dark-mode .version-name {
+  color: #ffffff;
+}
+
+.version-date {
+  font-size: 14px;
+  color: #909399;
+}
+
+.version-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.action-btn {
+  padding: 8px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.3s;
+}
+
+.action-btn:nth-child(1) {
+  background-color: #409eff;
+  color: white;
+}
+
+.action-btn:nth-child(2) {
+  background-color: #67c23a;
+  color: white;
+}
+
+.action-btn:nth-child(3) {
+  background-color: #e6a23c;
+  color: white;
+}
+
+.action-btn:hover {
+  opacity: 0.8;
+}
