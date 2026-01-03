@@ -5,7 +5,7 @@
       <div class="top-card">
         <div class="card-title-section">
           <span class="card-title">版本管理</span>
-          <span class="card-subtitle">管理书签版本，支持版本对比和回滚</span>
+          <span class="card-subtitle">管理书签版本，支持版本查看和恢复</span>
         </div>
         
           <input 
@@ -15,22 +15,21 @@
             style="display: none" 
             @change="handleVersionFileInputChange"
           />
-          <span class="upload-btn" @click="triggerVersionFileUpload">上传新文件</span>
         
         <div class="card-mode-section">
           <DarkModeToggle :is-day-mode="isDayMode" @toggle="toggleMode" />
+                  <span class="upload-btn" @click="triggerVersionFileUpload">上传新文件</span>
         </div>
       </div>
       <div class="main-card">
         <div class="version-list">
-          <div class="version-item" v-for="(version, index) in versionList" :key="index">
+          <div class="version-item" v-for="(version, index) in paginatedVersionList" :key="index">
             <div class="version-info">
               <span class="version-name">{{ version.name }}</span>
               <span class="version-date">{{ version.date }}</span>
             </div>
             <div class="version-actions">
               <span class="action-btn" @click="viewVersion(version)">查看</span>
-              <span class="action-btn" @click="compareVersion(version)">对比</span>
               <span class="action-btn" @click="restoreVersion(version)">恢复</span>
             </div>
           </div>
@@ -48,116 +47,108 @@
         />
       </div>
     </div>
+
+    <VersionDetailsDialog 
+      v-model="detailDialogVisible"
+      :version-detail="currentVersionDetail"
+    />
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useVersionStore } from '@/store/version'
 import LeftSidebar from '@/components/layout/left-sidebar.vue'
 import DarkModeToggle from '@/components/layout/dark-mode-toggle.vue'
 import Pagination from '@/components/layout/pagination.vue'
+import VersionDetailsDialog from '@/components/version-details-model.vue'
+import { getVersionDetail } from '@/api/version'
+import { ElMessage } from 'element-plus'
 
-const activeMenu = ref('版本管理')
-const isDayMode = ref(true)
 const versionFileInput = ref(null)
+const detailDialogVisible = ref(false)
+const currentVersionDetail = ref(null)
 
-const allVersionList = ref([
-  { name: '版本 1.0', date: '2024-01-15 10:30:00' },
-  { name: '版本 1.1', date: '2024-01-20 14:20:00' },
-  { name: '版本 1.2', date: '2024-01-25 09:15:00' },
-  { name: '版本 1.3', date: '2024-02-01 11:45:00' },
-  { name: '版本 1.4', date: '2024-02-10 16:20:00' },
-  { name: '版本 1.5', date: '2024-02-15 08:30:00' },
-  { name: '版本 1.6', date: '2024-02-20 13:50:00' },
-  { name: '版本 1.7', date: '2024-02-25 10:15:00' },
-  { name: '版本 1.8', date: '2024-03-01 15:40:00' },
-  { name: '版本 1.9', date: '2024-03-05 09:20:00' },
-  { name: '版本 2.0', date: '2024-03-10 14:55:00' },
-  { name: '版本 2.1', date: '2024-03-15 11:30:00' }
-])
+const {
+  activeMenu,
+  isDayMode,
+  versionList,
+  currentPage,
+  pageSize,
+  total,
+  totalPages,
+  displayPages,
+  hasUploaded,
+  loadVersions,
+  handleVersionUpload,
+  handleRecover,
+  toggleMode,
+  initTheme,
+  prevPage,
+  nextPage,
+  goToPage,
+  handleJump
+} = useVersionStore()
 
-const currentPage = ref(1)
-const pageSize = ref(5)
-
-const total = computed(() => allVersionList.value.length)
-const totalPages = computed(() => Math.ceil(total.value / pageSize.value))
-
-const versionList = computed(() => {
+const paginatedVersionList = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value
   const end = start + pageSize.value
-  return allVersionList.value.slice(start, end)
+  return versionList.value.slice(start, end)
 })
-
-const displayPages = computed(() => {
-  const pages = []
-  const maxVisible = 5
-  
-  if (totalPages.value <= maxVisible) {
-    for (let i = 1; i <= totalPages.value; i++) {
-      pages.push(i)
-    }
-  } else {
-    if (currentPage.value <= 3) {
-      pages.push(1, 2, 3, 4, '...', totalPages.value)
-    } else if (currentPage.value >= totalPages.value - 2) {
-      pages.push(1, '...', totalPages.value - 3, totalPages.value - 2, totalPages.value - 1, totalPages.value)
-    } else {
-      pages.push(1, '...', currentPage.value - 1, currentPage.value, currentPage.value + 1, '...', totalPages.value)
-    }
-  }
-  
-  return pages
-})
-
-function prevPage() {
-  if (currentPage.value > 1) {
-    currentPage.value--
-  }
-}
-
-function nextPage() {
-  if (currentPage.value < totalPages.value) {
-    currentPage.value++
-  }
-}
-
-function goToPage(page) {
-  currentPage.value = page
-}
-
-function handleJump(page) {
-  if (page >= 1 && page <= totalPages.value) {
-    currentPage.value = page
-  }
-}
-
-function toggleMode() {
-  isDayMode.value = !isDayMode.value
-}
 
 function triggerVersionFileUpload() {
   versionFileInput.value.click()
 }
 
-function handleVersionFileInputChange(event) {
+async function handleVersionFileInputChange(event) {
   const file = event.target.files[0]
-  console.log('上传版本文件:', file)
+  await handleVersionUpload(file)
   event.target.value = ''
 }
 
-function viewVersion(version) {
-  console.log('查看版本:', version)
+async function viewVersion(version) {
+  try {
+        if (!hasUploaded.value) {
+      currentVersionDetail.value = {
+        id: version.id,
+        name: version.name,
+        date: version.date,
+        bookmarkCount: Math.floor(Math.random() * 50) + 10,
+        bookmarks: [
+          { title: 'Google', url: 'https://www.google.com', dateAdded: '2024-01-15 10:30:00' },
+          { title: 'GitHub', url: 'https://github.com', dateAdded: '2024-01-16 14:20:00' },
+          { title: 'Stack Overflow', url: 'https://stackoverflow.com', dateAdded: '2024-01-17 09:15:00' },
+          { title: 'MDN Web Docs', url: 'https://developer.mozilla.org', dateAdded: '2024-01-18 16:45:00' },
+          { title: 'Vue.js', url: 'https://vuejs.org', dateAdded: '2024-01-19 11:30:00' }
+        ]
+      }
+      detailDialogVisible.value = true
+      return
+    }
+    
+    const response = await getVersionDetail(version.id)
+    if (response && response.data) {
+      currentVersionDetail.value = response.data
+      detailDialogVisible.value = true
+    }
+  } catch (error) {
+    console.error('获取版本详情失败:', error)
+    ElMessage.error('获取版本详情失败')
+  }
 }
 
-function compareVersion(version) {
-  console.log('对比版本:', version)
-}
-
-function restoreVersion(version) {
-  console.log('恢复版本:', version)
+async function restoreVersion(version) {
+  try {
+    await handleRecover(version.id)
+  } catch (error) {
+    console.error('恢复版本失败:', error)
+    ElMessage.error('恢复版本失败')
+  }
 }
 
 onMounted(() => {
+  initTheme()
+  loadVersions()
 })
 </script>
 

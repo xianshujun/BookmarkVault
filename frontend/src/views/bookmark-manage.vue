@@ -110,10 +110,9 @@ import Pagination from '@/components/layout/pagination.vue'
 import { getBookmarks, addBookmark, searchBookmarks } from '@/api/bookmark'
 import { ElMessage } from 'element-plus'
 
-const fileInput = ref(null)
-
 const {
   activeMenu,
+  fileInput,
   searchKeyword,
   isDayMode,
   uploadedFiles,
@@ -125,11 +124,11 @@ const {
   bookmarkForm,
   totalPages,
   displayPages,
-  handleMenuClick,
   handleFileUpload,
   deleteFile,
   toggleMode,
   openAddDialog,
+  closeAddDialog,
   editBookmark,
   deleteBookmark,
   prevPage,
@@ -172,7 +171,7 @@ async function submitBookmark() {
     if (response && response.data) {
       ElMessage.success(response.data.message || '添加成功')
       await loadBookmarks()
-      addDialogVisible.value = false
+      closeAddDialog()
     }
   } catch (error) {
     console.error('添加书签失败:', error)
